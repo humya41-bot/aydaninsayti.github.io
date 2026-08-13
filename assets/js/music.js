@@ -1,25 +1,16 @@
 'use strict';
 
-let ytPlayer = null;
-let videoId  = null;
+/* ── Kafabidunya — Binlerce Özür Mesajı
+   YouTube video ID — URL-dən v=XXXXX hissəsi  ── */
+const BG_VIDEO_ID = 'BURAYA_VIDEO_ID_YAZ';
 
-async function findBgMusic() {
-    try {
-        const res  = await fetch('search.php', {
-            method:  'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                lyrics:      'kafabidunya binlerce özür mesajı',
-                api_key:     localStorage.getItem('yt_api_key') || 'AIzaSyDuw4l7_NNc1fUXZuclH5gzIe7cLWFrXl8',
-                max_results: 1,
-            }),
-        });
-        const data = await res.json();
-        if (data.success && data.items?.length) {
-            videoId = data.items[0].video_id;
-            initYTPlayer(videoId);
-        }
-    } catch {}
+let ytPlayer = null;
+let started  = false;
+
+function findBgMusic() {
+    if (started || !BG_VIDEO_ID || BG_VIDEO_ID === 'BURAYA_VIDEO_ID_YAZ') return;
+    started = true;
+    initYTPlayer(BG_VIDEO_ID);
 }
 
 function initYTPlayer(vid) {
@@ -28,8 +19,8 @@ function initYTPlayer(vid) {
         return;
     }
     ytPlayer = new YT.Player('yt-player', {
-        height: '1',
-        width:  '1',
+        height:  '1',
+        width:   '1',
         videoId: vid,
         playerVars: {
             autoplay:       1,
@@ -55,4 +46,16 @@ window.onYouTubeIframeAPIReady = function () {
     if (videoId) initYTPlayer(videoId);
 };
 
-document.addEventListener('DOMContentLoaded', findBgMusic);
+/* ── Start on first user interaction ──────────────────
+   Browsers allow autoplay only after user gesture.
+   We listen once for any click/touch/keypress.       */
+function onFirstInteraction() {
+    ['click', 'touchstart', 'keydown'].forEach(ev =>
+        document.removeEventListener(ev, onFirstInteraction)
+    );
+    findBgMusic();
+}
+
+['click', 'touchstart', 'keydown'].forEach(ev =>
+    document.addEventListener(ev, onFirstInteraction, { once: true, passive: true })
+);
